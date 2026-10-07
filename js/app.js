@@ -124,6 +124,35 @@
     update();
   }
 
+  /* Reveal on scroll. Without script the page stays visible, so this is additive. */
+  function reveal() {
+    if (reduced || !('IntersectionObserver' in window)) { return; }
+
+    var targets = [].slice.call(document.querySelectorAll('.hero__inner > *, .section > .container'));
+    if (!targets.length) { return; }
+
+    document.documentElement.classList.add('js-reveal');
+
+    targets.forEach(function (target, index) {
+      target.setAttribute('data-reveal', '');
+      if (target.parentNode && target.parentNode.classList.contains('hero__inner') && index === 1) {
+        target.setAttribute('data-reveal-delay', '1');
+      }
+    });
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+
+    targets.forEach(function (target) { observer.observe(target); });
+  }
+
+  reveal();
   heroCanvas();
   quoteBuilder();
 })();
