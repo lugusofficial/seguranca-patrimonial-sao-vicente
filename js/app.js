@@ -152,7 +152,70 @@
     targets.forEach(function (target) { observer.observe(target); });
   }
 
+  /* Carrossel de imagens, acessível por teclado e por toque. */
+  function imageSlider() {
+    var root = document.querySelector('[data-slider]');
+    if (!root) { return; }
+    var track = root.querySelector('[data-slider-track]');
+    var dots = root.querySelector('[data-slider-dots]');
+    var prev = root.querySelector('[data-slider-prev]');
+    var next = root.querySelector('[data-slider-next]');
+    if (!track || !dots || !prev || !next) { return; }
+
+    var slides = [].slice.call(track.children);
+    if (slides.length < 2) { return; }
+
+    var index = 0;
+    var buttons = slides.map(function (slide, i) {
+      var li = document.createElement('li');
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'slider__dot';
+      var label = document.createElement('span');
+      label.className = 'visually-hidden';
+      label.textContent = 'Imagem ' + (i + 1);
+      button.appendChild(label);
+      button.addEventListener('click', function () { go(i); });
+      li.appendChild(button);
+      dots.appendChild(li);
+      return button;
+    });
+
+    function go(target) {
+      index = (target + slides.length) % slides.length;
+      track.style.transform = 'translateX(' + (index * -100) + '%)';
+      slides.forEach(function (slide, i) {
+        slide.setAttribute('aria-hidden', i === index ? 'false' : 'true');
+      });
+      buttons.forEach(function (button, i) {
+        button.setAttribute('aria-current', i === index ? 'true' : 'false');
+      });
+    }
+
+    prev.addEventListener('click', function () { go(index - 1); });
+    next.addEventListener('click', function () { go(index + 1); });
+
+    root.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); go(index - 1); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); go(index + 1); }
+    });
+
+    var startX = null;
+    root.addEventListener('touchstart', function (event) {
+      startX = event.touches[0].clientX;
+    }, { passive: true });
+    root.addEventListener('touchend', function (event) {
+      if (startX === null) { return; }
+      var delta = event.changedTouches[0].clientX - startX;
+      if (Math.abs(delta) > 45) { go(index + (delta < 0 ? 1 : -1)); }
+      startX = null;
+    });
+
+    go(0);
+  }
+
   reveal();
   heroCanvas();
   quoteBuilder();
+  imageSlider();
 })();
